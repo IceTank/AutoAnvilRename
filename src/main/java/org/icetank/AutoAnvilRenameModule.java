@@ -6,6 +6,7 @@ import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
@@ -124,10 +125,9 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 			for (int i = 3; i < 36 + 3; i++) {
 				ItemStack itemStack = containerMenu.getSlot(i).getItem();
 				String itemName = removeBrackets(itemStack.getDisplayName().getString());
-				String[] longItemId = itemStack.getDescriptionId().split("\\.");
-				if (longItemId.length < 2) continue;
-				String itemId = longItemId[longItemId.length - 1];
+				String itemId = getItemId(itemStack.getItem());
 
+				if (itemId.equals("")) continue;
 				if (selectiveMode.getValue() && !selectiveId.getValue().equals(itemId)) continue;
 				if (onlyRenamed.getValue() && !itemStack.hasCustomHoverName()) continue;
 				if (onlyShulkers.getValue() && !isShulker(itemStack) && !selectiveMode.getValue()) continue;
@@ -139,6 +139,12 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 				return;
 			}
 		}
+	}
+
+	public static String getItemId(Item item) {
+		String[] longItemId = item.getDescriptionId().split("\\.");
+		if (longItemId.length < 2) return "";
+		return longItemId[longItemId.length - 1];
 	}
 
 	public static boolean isShulker(ItemStack itemStack) {
