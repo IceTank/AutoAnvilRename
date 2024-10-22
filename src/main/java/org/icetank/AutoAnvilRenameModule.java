@@ -82,10 +82,16 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 
 		int playerLevels = mc.player.experienceLevel;
 
-		// Click the item in the anvil output slot if the item has the right name
+		// Check if there is an output
 		if (!itemStackOutput.isEmpty()) {
+
+			int cost = ((AnvilMenu) mc.player.containerMenu).getCost();
+
+			// Check if name matches the renameText option with an edge case for empty name values which remove the name.
 			if (outputItemName.equals(renameText.getValue()) || (renameText.getValue().equals("") && !itemStackOutput.hasCustomHoverName())) {
-				if ((playerLevels < 1 && !mc.player.isCreative())) {
+
+				// Automatically use XP bottles until the rename can be afforded
+				if ((playerLevels < cost && !mc.player.isCreative()) && autoXP.getValue()) {
 					if (!mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
 						int bottleSlot = InventoryUtils.findItemHotbar(Items.EXPERIENCE_BOTTLE);
 						if (bottleSlot != -1 && bottleSlot > 0 && bottleSlot < 9) {
@@ -98,14 +104,15 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 					}
 				}
 
-				if (playerLevels > 0 || mc.player.isCreative()) {
+				// Take item from output if player has enough XP
+				if (playerLevels >= cost || mc.player.isCreative()) {
 					InventoryUtils.clickSlot(2, true);
 					return;
 				}
 			}
 		}
 
-		// Set the name off the item in the anvil if present
+		// Set the name of the item in the anvil if present
 		if (!itemStackInput1.isEmpty() && !outputItemName.equals(renameText.getValue())) {
 			EditBox editBox = AnvilScreenAccessInvoker.getEditBox(((AnvilScreen) mc.screen));
 			if (editBox != null) editBox.setValue(renameText.getValue());
@@ -116,19 +123,18 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 		if (itemStackInput1.isEmpty() && itemStackInput2.isEmpty()) {
 			for (int i = 3; i < 36 + 3; i++) {
 				ItemStack itemStack = containerMenu.getSlot(i).getItem();
+				String itemName = removeBrackets(itemStack.getDisplayName().getString());
 				String[] longItemId = itemStack.getDescriptionId().split("\\.");
-				if (longItemId.length == 0) continue;
+				if (longItemId.length < 2) continue;
 				String itemId = longItemId[longItemId.length - 1];
 
-				if ((selectiveMode.getValue() && !selectiveId.getValue().equals(itemId))
-				 || (onlyRenamed.getValue() && !itemStack.hasCustomHoverName())
-				 || (onlyShulkers.getValue() && !isShulker(itemStack))
-				 || itemStack.isEmpty()
-				 || removeBrackets(itemStack.getDisplayName().getString()).equals(renameText.getValue())) continue;
+				if (selectiveMode.getValue() && !selectiveId.getValue().equals(itemId)) continue;
+				if (onlyRenamed.getValue() && !itemStack.hasCustomHoverName()) continue;
+				if (onlyShulkers.getValue() && !isShulker(itemStack) && !selectiveMode.getValue()) continue;
+				if (itemStack.isEmpty()) continue;
+				if (itemName.equals(renameText.getValue())) continue;
 
-				ChatUtils.print(removeBrackets(itemStack.getDisplayName().getString()));
-				ChatUtils.print(renameText.getValue());
-
+				ChatUtils.print(itemName + " -> " + renameText.getValue());
 				InventoryUtils.clickSlot(i, true);
 				return;
 			}

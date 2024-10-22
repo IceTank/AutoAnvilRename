@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = project.mod_version
+version = project.plugin_version
 group = project.maven_group
 
 configurations {
@@ -78,6 +78,14 @@ java {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
     archivesBaseName = project.archives_base_name
+}
+
+processResources {
+    inputs.property "plugin_version", project.plugin_version
+
+    filesMatching("rusherhack-plugin.json") {
+        expand(plugin_version: project.plugin_version)
+    }
 }
 
 jar {
