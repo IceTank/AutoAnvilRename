@@ -18,7 +18,7 @@ Plugin for RusherHack that automatically renames items in an anvil.
 
 ### Commands
 
-- `*autoanvilrename setname <new text>` - Sets the rename value text.
-
+- `*autoanvilrename setname <String name>` - Sets the rename value text.
+- `*autoanvilrename selectid <Item item>` - Sets the item id filter.
 
 
