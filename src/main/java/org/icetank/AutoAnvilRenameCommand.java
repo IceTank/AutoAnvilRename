@@ -5,11 +5,6 @@ import org.rusherhack.client.api.feature.command.Command;
 import org.rusherhack.core.command.annotations.CommandExecutor;
 import org.rusherhack.core.setting.StringSetting;
 
-/**
- * Example rusherhack command
- *
- * @author John200410
- */
 public class AutoAnvilRenameCommand extends Command {
 	
 	public AutoAnvilRenameCommand() {
