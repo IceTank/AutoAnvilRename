@@ -2,9 +2,13 @@ package org.icetank;
 
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AnvilScreen;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.events.client.EventUpdate;
@@ -22,58 +26,32 @@ import org.rusherhack.core.setting.StringSetting;
 
 import java.awt.*;
 
-/**
- * Example rusherhack module
- *
- * @author John200410
- */
 public class AutoAnvilRenameModule extends ToggleableModule {
-	
-	/**
-	 * Settings
-	 */
 	private final StringSetting renameText = new StringSetting("RenameText", "Sponsored by RusherHack Plugins");
-	private final BooleanSetting onlyShulkers = new BooleanSetting("OnlyShulkers", true);
+	private final BooleanSetting selectiveMode = new BooleanSetting("Selective", false);
+	private final StringSetting selectiveId = new StringSetting("ItemId", "end_crystal").setVisibility(this.selectiveMode::getValue);
+	private final BooleanSetting onlyShulkers = new BooleanSetting("OnlyShulkers", false)
+			.setVisibility(() -> !(this.selectiveMode.getValue()));
+	private final BooleanSetting onlyRenamed = new BooleanSetting("OnlyRenamed", false);
 	private final NumberSetting<Integer> clickDelay = new NumberSetting<>("Click Delay", 1, 3, 10);
+	private final BooleanSetting autoXP = new BooleanSetting("AutoXP", false);
 	private int delay = 0;
 
-	/**
-	 * Constructor
-	 */
 	public AutoAnvilRenameModule() {
 		super("AutoAnvilRename", "Renames items in an anvil automatically", ModuleCategory.CLIENT);
 		
 		//register settings
 		this.registerSettings(
 				this.renameText,
+				this.selectiveMode,
+				this.selectiveId,
 				this.onlyShulkers,
-				this.clickDelay
+				this.onlyRenamed,
+				this.clickDelay,
+				this.autoXP
 		);
 	}
-	
-	/**
-	 * 2d renderer demo
-	 */
-	@Subscribe
-	private void onRender2D(EventRender2D event) {
-		//renderers
-		final IRenderer2D renderer = RusherHackAPI.getRenderer2D();
-		final IFontRenderer fontRenderer = RusherHackAPI.fonts().getFontRenderer();
-		
-		//must begin renderer first
-		renderer.begin(event.getMatrixStack(), fontRenderer);
-		
-		//draw stuff
-		fontRenderer.drawString("Current Text:", 100, 100, Color.WHITE.getRGB());
-		fontRenderer.drawString(this.renameText.getValue(), 100, 110, Color.WHITE.getRGB());
-		
-		//end renderer
-		renderer.end();
-	}
-	
-	/**
-	 * Rotation demo
-	 */
+
 	@Subscribe
 	private void onUpdate(EventUpdate event) {
 		if (delay > clickDelay.getValue()) {
@@ -104,18 +82,38 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 		String outputItemName = removeBrackets(itemStackOutput.getDisplayName().getString());
 
 		int playerLevels = mc.player.experienceLevel;
-		// Click the item in the anvil output slot if the item has the right name
-		if (!itemStackOutput.isEmpty()
-				/* && guess this does not work ¯\_(ツ)_/¯ containerMenu.mayPickup(mc.player, true) && */
-				&& (playerLevels > 0 || mc.player.isCreative())
-				&& outputItemName.equals(renameText.getValue())
-		) {
-			ChatUtils.print("Pulling out item");
-			InventoryUtils.clickSlot(2, true);
-			return;
+
+		// Check if there is an output
+		if (!itemStackOutput.isEmpty()) {
+
+			int cost = ((AnvilMenu) mc.player.containerMenu).getCost();
+
+			// Check if name matches the renameText option with an edge case for empty name values which remove the name.
+			if (outputItemName.equals(renameText.getValue()) || (renameText.getValue().equals("") && !itemStackOutput.hasCustomHoverName())) {
+
+				// Automatically use XP bottles until the rename can be afforded
+				if ((playerLevels < cost && !mc.player.isCreative()) && autoXP.getValue()) {
+					if (!mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
+						int bottleSlot = InventoryUtils.findItemHotbar(Items.EXPERIENCE_BOTTLE);
+						if (bottleSlot != -1 && bottleSlot > 0 && bottleSlot < 9) {
+							mc.player.getInventory().selected = bottleSlot;
+						}
+					}
+
+					if (mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
+						mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 1));
+					}
+				}
+
+				// Take item from output if player has enough XP
+				if (playerLevels >= cost || mc.player.isCreative()) {
+					InventoryUtils.clickSlot(2, true);
+					return;
+				}
+			}
 		}
 
-		// Set the name off the item in the anvil if present
+		// Set the name of the item in the anvil if present
 		if (!itemStackInput1.isEmpty() && !outputItemName.equals(renameText.getValue())) {
 			EditBox editBox = AnvilScreenAccessInvoker.getEditBox(((AnvilScreen) mc.screen));
 			if (editBox != null) editBox.setValue(renameText.getValue());
@@ -126,13 +124,27 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 		if (itemStackInput1.isEmpty() && itemStackInput2.isEmpty()) {
 			for (int i = 3; i < 36 + 3; i++) {
 				ItemStack itemStack = containerMenu.getSlot(i).getItem();
-				if (!itemStack.isEmpty() && !removeBrackets(itemStack.getDisplayName().getString()).equals(renameText.getValue())) {
-					if (onlyShulkers.getValue() && !isShulker(itemStack)) continue;
-					InventoryUtils.clickSlot(i, true);
-					return;
-				}
+				String itemName = removeBrackets(itemStack.getDisplayName().getString());
+				String itemId = getItemId(itemStack.getItem());
+
+				if (itemId.equals("")) continue;
+				if (selectiveMode.getValue() && !selectiveId.getValue().equals(itemId)) continue;
+				if (onlyRenamed.getValue() && !itemStack.hasCustomHoverName()) continue;
+				if (onlyShulkers.getValue() && !isShulker(itemStack) && !selectiveMode.getValue()) continue;
+				if (itemStack.isEmpty()) continue;
+				if (itemName.equals(renameText.getValue())) continue;
+
+				ChatUtils.print(itemName + " -> " + renameText.getValue());
+				InventoryUtils.clickSlot(i, true);
+				return;
 			}
 		}
+	}
+
+	public static String getItemId(Item item) {
+		String[] longItemId = item.getDescriptionId().split("\\.");
+		if (longItemId.length < 2) return "";
+		return longItemId[longItemId.length - 1];
 	}
 
 	public static boolean isShulker(ItemStack itemStack) {

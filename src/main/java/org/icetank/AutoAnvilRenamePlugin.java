@@ -3,11 +3,6 @@ package org.icetank;
 import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.plugin.Plugin;
 
-/**
- * Example rusherhack plugin
- *
- * @author John200410
- */
 public class AutoAnvilRenamePlugin extends Plugin {
 	
 	@Override
@@ -43,10 +38,5 @@ public class AutoAnvilRenamePlugin extends Plugin {
 	@Override
 	public String getDescription() {
 		return "Auto Anvil Rename";
-	}
-	
-	@Override
-	public String[] getAuthors() {
-		return new String[]{"IceTank (ign: Ic3Tank)"};
 	}
 }
