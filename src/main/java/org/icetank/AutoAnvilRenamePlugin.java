@@ -24,19 +24,8 @@ public class AutoAnvilRenamePlugin extends Plugin {
 	public void onUnload() {
 		this.getLogger().info(this.getName() + " unloaded!");
 	}
-	
-	@Override
 	public String getName() {
 		return "AutoAnvilRenamePlugin";
 	}
-	
-	@Override
-	public String getVersion() {
-		return "v0.1";
-	}
-	
-	@Override
-	public String getDescription() {
-		return "Auto Anvil Rename";
-	}
+
 }

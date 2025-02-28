@@ -77,7 +77,6 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-    archivesBaseName = project.archives_base_name
 }
 
 processResources {
@@ -87,6 +86,8 @@ processResources {
         expand(plugin_version: project.plugin_version)
     }
 }
+
+
 
 jar {
     manifest {
