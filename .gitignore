@@ -119,3 +119,5 @@ run/
 gradlew
 gradlew.bat
 /gradle
+
+lib/

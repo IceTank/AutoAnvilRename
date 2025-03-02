@@ -1,17 +1,14 @@
 {
   "Plugin-Class": "org.icetank.AutoAnvilRenamePlugin",
-  "Name": "AutoAnvilRename",
-  "Version": "${plugin_version}",
-  "Description": "",
+  "Name": "${project.plugin_name}",
+  "Version": "${project.plugin_version}",
+  "Description": "Example rusherhack plugin",
+  "URL": "https://github.com/RusherDevelopment/example-plugin",
   "Authors": [
     "icetank",
     "_90_"
   ],
   "Minecraft-Versions": [
-    "1.20.1",
-    "1.20.2",
-    "1.20.3",
-    "1.20.4",
-    "1.21.1"
+    "${project.minecraft_version}"
   ]
 }
