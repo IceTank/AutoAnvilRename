@@ -10,21 +10,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
-import org.rusherhack.client.api.RusherHackAPI;
 import org.rusherhack.client.api.events.client.EventUpdate;
-import org.rusherhack.client.api.events.render.EventRender2D;
 import org.rusherhack.client.api.feature.module.ModuleCategory;
 import org.rusherhack.client.api.feature.module.ToggleableModule;
-import org.rusherhack.client.api.render.IRenderer2D;
-import org.rusherhack.client.api.render.font.IFontRenderer;
 import org.rusherhack.client.api.utils.ChatUtils;
 import org.rusherhack.client.api.utils.InventoryUtils;
 import org.rusherhack.core.event.subscribe.Subscribe;
 import org.rusherhack.core.setting.BooleanSetting;
 import org.rusherhack.core.setting.NumberSetting;
 import org.rusherhack.core.setting.StringSetting;
-
-import java.awt.*;
 
 public class AutoAnvilRenameModule extends ToggleableModule {
 	private final StringSetting renameText = new StringSetting("RenameText", "Sponsored by RusherHack Plugins");
@@ -62,14 +56,10 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 	}
 	
 	@Override
-	public void onEnable() {
-
-	}
+	public void onEnable() {}
 	
 	@Override
-	public void onDisable() {
-
-	}
+	public void onDisable() {}
 
 	void tick() {
 		if (mc.player == null || mc.level == null || mc.gameMode == null) return;
@@ -89,19 +79,19 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 			int cost = ((AnvilMenu) mc.player.containerMenu).getCost();
 
 			// Check if name matches the renameText option with an edge case for empty name values which remove the name.
-			if (outputItemName.equals(renameText.getValue()) || (renameText.getValue().equals("") && !itemStackOutput.hasCustomHoverName())) {
+			if (outputItemName.equals(renameText.getValue()) || (renameText.getValue().isEmpty() && !itemStackOutput.getHoverName().toString().isEmpty())) {
 
 				// Automatically use XP bottles until the rename can be afforded
 				if ((playerLevels < cost && !mc.player.isCreative()) && autoXP.getValue()) {
 					if (!mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
 						int bottleSlot = InventoryUtils.findItemHotbar(Items.EXPERIENCE_BOTTLE);
-						if (bottleSlot != -1 && bottleSlot > 0 && bottleSlot < 9) {
+						if (bottleSlot > 0 && bottleSlot < 9) {
 							mc.player.getInventory().selected = bottleSlot;
 						}
 					}
 
 					if (mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
-						mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 1));
+						mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 1, 0, 90));
 					}
 				}
 
@@ -127,9 +117,9 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 				String itemName = removeBrackets(itemStack.getDisplayName().getString());
 				String itemId = getItemId(itemStack.getItem());
 
-				if (itemId.equals("")) continue;
+				if (itemId.isEmpty()) continue;
 				if (selectiveMode.getValue() && !selectiveId.getValue().equals(itemId)) continue;
-				if (onlyRenamed.getValue() && !itemStack.hasCustomHoverName()) continue;
+				if (onlyRenamed.getValue() && !itemStackOutput.getHoverName().toString().isEmpty()) continue;
 				if (onlyShulkers.getValue() && !isShulker(itemStack) && !selectiveMode.getValue()) continue;
 				if (itemStack.isEmpty()) continue;
 				if (itemName.equals(renameText.getValue())) continue;
