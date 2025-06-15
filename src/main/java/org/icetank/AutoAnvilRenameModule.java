@@ -91,7 +91,7 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 					}
 
 					if (mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
-						mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 1, 0, 0));
+						mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 1, 0, 90));
 					}
 				}
 
