@@ -8,7 +8,6 @@ import java.util.Arrays;
 
 public class AnvilScreenAccessInvoker {
     public static EditBox getEditBox(AnvilScreen screen) {
-        System.out.println("Fields: " + Arrays.toString(screen.getClass().getDeclaredFields()));
         try {
             Field field = screen.getClass().getDeclaredField("field_2821");
             field.setAccessible(true);
