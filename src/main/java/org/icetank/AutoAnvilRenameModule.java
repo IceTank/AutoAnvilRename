@@ -56,16 +56,6 @@ public class AutoAnvilRenameModule extends ToggleableModule {
         delay++;
     }
 
-    @Override
-    public void onEnable() {
-
-    }
-
-    @Override
-    public void onDisable() {
-
-    }
-
     void tick() {
         if (mc.player == null || mc.level == null || mc.gameMode == null) return;
         if (mc.screen == null || !(mc.player.containerMenu instanceof AnvilMenu containerMenu)) return;
@@ -80,17 +70,16 @@ public class AutoAnvilRenameModule extends ToggleableModule {
 
         // Check if there is an output
         if (!itemStackOutput.isEmpty()) {
-
-            int cost = ((AnvilMenu) mc.player.containerMenu).getCost();
+            int cost = containerMenu.getCost();
 
             // Check if name matches the renameText option with an edge case for empty name values which remove the name.
-            if (outputItemName.equals(renameText.getValue()) || renameText.getValue().equals("")) {
+            if (outputItemName.equals(renameText.getValue()) || renameText.getValue().isEmpty()) {
 
                 // Automatically use XP bottles until the rename can be afforded
                 if ((playerLevels < cost && !mc.player.isCreative()) && autoXP.getValue()) {
                     if (!mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
                         int bottleSlot = InventoryUtils.findItemHotbar(Items.EXPERIENCE_BOTTLE);
-                        if (bottleSlot != -1 && bottleSlot > 0 && bottleSlot < 9) {
+                        if (bottleSlot > 0 && bottleSlot < 9) {
                             mc.player.getInventory().selected = bottleSlot;
                         }
                     }
@@ -129,7 +118,6 @@ public class AutoAnvilRenameModule extends ToggleableModule {
                 if (itemStack.isEmpty()) continue;
                 if (itemName.equals(renameText.getValue())) continue;
 
-                ChatUtils.print(itemName + " -> " + renameText.getValue());
                 InventoryUtils.clickSlot(i, true);
                 return;
             }
