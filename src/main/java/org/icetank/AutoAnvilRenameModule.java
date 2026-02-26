@@ -11,6 +11,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import org.rusherhack.client.api.events.client.EventUpdate;
 import org.rusherhack.client.api.feature.module.ModuleCategory;
 import org.rusherhack.client.api.feature.module.ToggleableModule;
@@ -31,6 +32,27 @@ public class AutoAnvilRenameModule extends ToggleableModule {
     private final NumberSetting<Integer> clickDelay = new NumberSetting<>("Click Delay", 1, 3, 10);
     private final BooleanSetting autoXP = new BooleanSetting("AutoXP", false);
     private int delay = 0;
+
+    private void throwXPBottle() {
+        if (mc.player == null) return;
+
+        float yaw = mc.player.getYRot();
+
+        // Not quite 90degrees for better reliability
+        float pitch = 87.5f;
+
+
+        // serverside rotation
+        mc.player.connection.send(
+                new ServerboundMovePlayerPacket.Rot(yaw, pitch, mc.player.onGround(), mc.player.horizontalCollision)
+        );
+
+        // throw bottle at feet
+        mc.player.connection.send(
+                new ServerboundUseItemPacket(
+                        InteractionHand.MAIN_HAND, 0, yaw, pitch)
+        );
+    }
 
     public AutoAnvilRenameModule() {
         super("AutoAnvilRename", "Renames items in an anvil automatically", ModuleCategory.CLIENT);
@@ -85,7 +107,7 @@ public class AutoAnvilRenameModule extends ToggleableModule {
                     }
 
                     if (mc.player.isHolding(Items.EXPERIENCE_BOTTLE)) {
-                        mc.player.connection.send(new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, 1, 1, 1));
+                        throwXPBottle();
                     }
                 }
 
